@@ -1,45 +1,180 @@
-// Variables to control game state
-let gameRunning = false; // Keeps track of whether game is active or not
-let dropMaker; // Will store our timer that creates drops regularly
+const gameContainer = document.getElementById("game-container");
+const scoreEl = document.getElementById("score");
+const timeEl = document.getElementById("time");
+const startBtn = document.getElementById("start-btn");
+const resetBtn = document.getElementById("reset-btn");
+const messageEl = document.getElementById("game-message");
 
-// Wait for button click to start the game
-document.getElementById("start-btn").addEventListener("click", startGame);
+let gameRunning = false;
+let score = 0;
+let timeLeft = 30;
+let countdownTimer;
+let itemTimer;
+
+startBtn.addEventListener("click", startGame);
+resetBtn.addEventListener("click", resetGame);
 
 function startGame() {
-  // Prevent multiple games from running at once
   if (gameRunning) return;
 
   gameRunning = true;
+  score = 0;
+  timeLeft = 30;
+  updateScoreDisplay();
+  timeEl.textContent = timeLeft;
+  setMessage("Collect the cans and keep the mission alive!", "neutral");
 
-  // Create new drops every second (1000 milliseconds)
-  dropMaker = setInterval(createDrop, 1000);
+  startBtn.disabled = true;
+  startBtn.textContent = "Game Running";
+  resetBtn.disabled = false;
+
+  gameContainer.querySelector(".game-instructions")?.remove();
+  gameContainer.querySelectorAll(".game-item, .game-overlay, .confetti-piece").forEach((item) => item.remove());
+
+  createItem();
+  itemTimer = setInterval(createItem, 800);
+  countdownTimer = setInterval(updateTimer, 1000);
 }
 
-function createDrop() {
-  // Create a new div element that will be our water drop
-  const drop = document.createElement("div");
-  drop.className = "water-drop";
+function resetGame() {
+  clearInterval(countdownTimer);
+  clearInterval(itemTimer);
+  gameRunning = false;
 
-  // Make drops different sizes for visual variety
-  const initialSize = 60;
-  const sizeMultiplier = Math.random() * 0.8 + 0.5;
-  const size = initialSize * sizeMultiplier;
-  drop.style.width = drop.style.height = `${size}px`;
+  score = 0;
+  timeLeft = 30;
+  updateScoreDisplay();
+  timeEl.textContent = timeLeft;
+  scoreEl.classList.remove("score-positive", "score-negative");
+  setMessage("Press start to begin rescuing safe water cans.", "neutral");
 
-  // Position the drop randomly across the game width
-  // Subtract 60 pixels to keep drops fully inside the container
-  const gameWidth = document.getElementById("game-container").offsetWidth;
-  const xPosition = Math.random() * (gameWidth - 60);
-  drop.style.left = xPosition + "px";
+  startBtn.disabled = false;
+  startBtn.textContent = "Start Game";
+  resetBtn.disabled = true;
 
-  // Make drops fall for 4 seconds
-  drop.style.animationDuration = "4s";
+  gameContainer.querySelectorAll(".game-item, .game-overlay, .confetti-piece").forEach((item) => item.remove());
 
-  // Add the new drop to the game screen
-  document.getElementById("game-container").appendChild(drop);
+  const instructions = document.createElement("div");
+  instructions.className = "game-instructions";
+  instructions.innerHTML = `
+    <h2>Help the mission</h2>
+    <p>Click the blue water cans to gain points. Avoid the red obstacle blocks.</p>
+  `;
+  gameContainer.appendChild(instructions);
+}
 
-  // Remove drops that reach the bottom (weren't clicked)
-  drop.addEventListener("animationend", () => {
-    drop.remove(); // Clean up drops that weren't caught
-  });
+function updateTimer() {
+  timeLeft -= 1;
+  timeEl.textContent = timeLeft;
+
+  if (timeLeft <= 0) {
+    clearInterval(countdownTimer);
+    clearInterval(itemTimer);
+    gameRunning = false;
+    startBtn.disabled = false;
+    startBtn.textContent = "Start Game";
+    resetBtn.disabled = false;
+
+    const outcomeText = score >= 30 ? "You met the goal and saved enough water!" : "Time is up. Reset and try again.";
+    setMessage(outcomeText, score >= 30 ? "positive" : "neutral");
+    showOverlay(score >= 30 ? "You win!" : "Time is up", `Final score: ${score}`);
+  }
+}
+
+function createItem() {
+  if (!gameRunning) return;
+
+  const item = document.createElement("button");
+  item.type = "button";
+  const isObstacle = Math.random() < 0.3;
+  item.className = isObstacle ? "game-item obstacle" : "game-item collectible";
+  const asset = isObstacle ? "img/cw_logo.png" : "img/water-can-transparent.png";
+  const altText = isObstacle ? "charity: water logo obstacle" : "water can collectible";
+  item.innerHTML = `<img class="item-image" src="${asset}" alt="${altText}">`;
+
+  const gameWidth = gameContainer.clientWidth - 90;
+  const gameHeight = gameContainer.clientHeight - 120;
+  const xPosition = Math.random() * gameWidth;
+  const yPosition = Math.random() * gameHeight;
+
+  item.style.left = `${xPosition}px`;
+  item.style.top = `${yPosition}px`;
+  item.style.setProperty("--fall-distance", `${gameContainer.clientHeight + 120}px`);
+  item.style.animationDuration = `${2.4 + Math.random() * 1.2}s`;
+
+  item.addEventListener("click", () => handleItemClick(item));
+  item.addEventListener("animationend", () => item.remove());
+
+  gameContainer.appendChild(item);
+}
+
+function handleItemClick(item) {
+  if (!gameRunning || item.classList.contains("clicked")) return;
+
+  item.classList.add("clicked");
+
+  if (item.classList.contains("collectible")) {
+    score += 5;
+    updateScoreDisplay();
+    flashScore("positive");
+    setMessage("Fresh water secured! Keep going.", "positive");
+  } else {
+    score = Math.max(0, score - 3);
+    updateScoreDisplay();
+    flashScore("negative");
+    setMessage("Obstacle spotted. Stay focused.", "negative");
+  }
+
+  item.remove();
+
+  if (score >= 30) {
+    clearInterval(countdownTimer);
+    clearInterval(itemTimer);
+    gameRunning = false;
+    startBtn.disabled = false;
+    startBtn.textContent = "Play Again";
+    resetBtn.disabled = false;
+    setMessage("You saved enough water to win!", "positive");
+    showOverlay("You win!", `Final score: ${score}`);
+    createConfetti();
+  }
+}
+
+function updateScoreDisplay() {
+  scoreEl.textContent = score;
+}
+
+function flashScore(type) {
+  scoreEl.classList.remove("score-positive", "score-negative");
+  void scoreEl.offsetWidth;
+  scoreEl.classList.add(type === "positive" ? "score-positive" : "score-negative");
+  setTimeout(() => {
+    scoreEl.classList.remove("score-positive", "score-negative");
+  }, 300);
+}
+
+function setMessage(text, tone) {
+  messageEl.textContent = text;
+  messageEl.className = `game-message ${tone}`;
+}
+
+function showOverlay(title, details) {
+  const overlay = document.createElement("div");
+  overlay.className = "game-overlay";
+  overlay.innerHTML = `<h2>${title}</h2><p>${details}</p>`;
+  gameContainer.appendChild(overlay);
+}
+
+function createConfetti() {
+  const colors = ["#FFC907", "#2E9DF7", "#4FCB53", "#F5402C", "#8BD1CB"];
+
+  for (let i = 0; i < 36; i += 1) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.backgroundColor = colors[i % colors.length];
+    piece.style.animationDuration = `${2 + Math.random() * 1.4}s`;
+    piece.style.animationDelay = `${Math.random() * 0.2}s`;
+    gameContainer.appendChild(piece);
+  }
 }

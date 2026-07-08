@@ -3,23 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Water Drop Game</title>
+    <title>Water Drop Rescue</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="game-wrapper">
-        <h1 class="game-title">Water Drop</h1>
-        <p class="game-tagline">Catch the good drops, avoid the bad ones!</p>
-        <div class="score-panel">
+    <main class="game-wrapper">
+        <header class="game-header">
+            <img class="brand-logo" src="img/cw_logo-horizontal.png" alt="charity: water logo">
+            <h1 class="game-title">Water Drop Rescue</h1>
+            <p class="game-tagline">Collect safe water cans, avoid the obstacles, and help bring clean water to more communities.</p>
+        </header>
+
+        <section class="score-panel" aria-label="game score and controls">
             <div class="score">Score: <span id="score">0</span></div>
             <div class="timer">Time: <span id="time">30</span>s</div>
-            <button id="start-btn">Start Game</button>
-        </div>
-        
-        <div id="game-container">
-        </div>
-    </div>
-    
+            <div class="button-group">
+                <button id="start-btn">Start Game</button>
+                <button id="reset-btn" disabled>Reset</button>
+            </div>
+        </section>
+
+        <p id="game-message" class="game-message">Press start to begin rescuing safe water cans.</p>
+
+        <section id="game-container" aria-label="water rescue game area">
+            <div class="game-instructions">
+                <h2>Help the mission</h2>
+                <p>Click the blue water cans to gain points. Avoid the red obstacle blocks.</p>
+            </div>
+        </section>
+    </main>
+
     <script src="script.js"></script>
 </body>
 </html>
