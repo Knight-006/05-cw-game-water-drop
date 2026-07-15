@@ -17,9 +17,20 @@
         <section class="score-panel" aria-label="game score and controls">
             <div class="score">Score: <span id="score">0</span></div>
             <div class="timer">Time: <span id="time">30</span>s</div>
-            <div class="button-group">
-                <button id="start-btn">Start Game</button>
-                <button id="reset-btn" disabled>Reset</button>
+            <div class="goal-pill">Goal: <span id="goal-value">30</span></div>
+            <div class="controls-group">
+                <label class="difficulty-control" for="difficulty-select">
+                    <span>Difficulty</span>
+                    <select id="difficulty-select">
+                        <option value="easy">Easy</option>
+                        <option value="normal" selected>Normal</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </label>
+                <div class="button-group">
+                    <button id="start-btn">Start Game</button>
+                    <button id="reset-btn" disabled>Reset</button>
+                </div>
             </div>
         </section>
 
@@ -31,6 +42,14 @@
                 <p>Click the blue water cans to gain points. Avoid the red obstacle blocks.</p>
             </div>
         </section>
+
+        <footer class="game-footer">
+            <p>Support clean water access today.</p>
+            <div class="footer-links">
+                <a href="https://www.charitywater.org/" target="_blank" rel="noreferrer">charity: water</a>
+                <a href="https://www.charitywater.org/donate" target="_blank" rel="noreferrer">Donate</a>
+            </div>
+        </footer>
     </main>
 
     <script src="script.js"></script>
